@@ -59,8 +59,7 @@ flowchart TD
 ```bash
 git clone github.com/tasmaikeni13/expression-tree-visualizer
 cd expression-tree-visualizer
-pip install -r requirements.txt
-python run.py
+python run.py (pip install -r requirements.txt is optional as it automatically downloads the requirements)
 ```
 
 ## Usage
@@ -117,4 +116,4 @@ expression-tree-visualizer/
 ## License
 
 
-Licensed under the Apache 2.0 License.
+This project is licensed under the **Apache License 2.0** — see the [LICENSE](LICENSE) file for details.
