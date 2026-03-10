@@ -57,7 +57,7 @@ flowchart TD
 ## Installation
 
 ```bash
-git clone <repo>
+git clone github.com/tasmaikeni13/expression-tree-visualizer
 cd expression-tree-visualizer
 pip install -r requirements.txt
 python run.py
@@ -100,12 +100,10 @@ expression-tree-visualizer/
 
 | View | Description |
 |---|---|
-| Main Window | Expression input, conversion output, traversal controls, and tree canvas |
-| Stack Animation | Step-by-step operator stack and output queue updates during conversion |
-| Tree Rendering | Binary expression tree with operator and operand nodes |
-| Traversal Playback | Highlighted node order for inorder, preorder, and postorder traversal |
+| ![](docs/main.png) | Main Window — Expression input, conversion output, traversal controls, and tree canvas |
+| ![](docs/stack.png) | Stack Animation — Step-by-step operator stack and output queue updates during conversion |
+| ![](docs/tree.png) | Tree Rendering — Binary expression tree with operator and operand nodes |
 
-Place screenshots in the repository and link them here when available.
 
 ## Applications
 
@@ -117,5 +115,6 @@ Place screenshots in the repository and link them here when available.
 | Symbolic manipulation study | Visualize algebraic expressions without requiring numeric substitution |
 
 ## License
+
 
 Licensed under the Apache 2.0 License.
