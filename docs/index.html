@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Expression Tree Visualizer — Documentation</title>
+    <meta name="description" content="Interactive Data Structures Visualization Tool — parse, convert, build, and explore numeric and symbolic expressions with animated expression trees." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+    <style>
+        /* ============================================================
+           ROOT & RESET
+           ============================================================ */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg:           #0f1021;
+            --bg2:          #181a30;
+            --bg3:          #222445;
+            --glass:        rgba(34, 36, 69, .72);
+            --cyan:         #00e5ff;
+            --violet:       #b388ff;
+            --green:        #69f0ae;
+            --orange:       #ffab40;
+            --pink:         #ff80ab;
+            --red:          #ff5252;
+            --text:         #e8eaf6;
+            --text2:        #9fa8da;
+            --text-muted:   #5c6bc0;
+            --mono:         'Fira Code', monospace;
+            --sans:         'Inter', system-ui, -apple-system, sans-serif;
+            --radius:       12px;
+            --transition:   .3s cubic-bezier(.4,0,.2,1);
+        }
+
+        html { scroll-behavior: smooth; font-size: 16px; }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { color: var(--cyan); text-decoration: none; transition: color var(--transition); }
+        a:hover { color: var(--violet); }
+
+        /* ============================================================
+           NAV
+           ============================================================ */
+        nav {
+            position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
+            background: rgba(15, 16, 33, .85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(92,107,192,.18);
+        }
+        .nav-inner {
+            max-width: 1200px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 2rem; height: 60px;
+        }
+        .nav-brand { font-weight: 700; font-size: 1.15rem; color: var(--cyan); }
+        .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+        .nav-links a { color: var(--text2); font-size: .88rem; font-weight: 500; }
+        .nav-links a:hover { color: var(--cyan); }
+
+        /* ============================================================
+           HERO
+           ============================================================ */
+        .hero {
+            min-height: 100vh; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center;
+            padding: 6rem 2rem 4rem;
+            background:
+                radial-gradient(ellipse at 30% 20%, rgba(0,229,255,.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(179,136,255,.08) 0%, transparent 60%),
+                var(--bg);
+        }
+        .hero-badge {
+            display: inline-block; padding: .35rem 1rem; border-radius: 99px;
+            font-size: .78rem; font-weight: 600; letter-spacing: .06em;
+            background: rgba(0,229,255,.12); color: var(--cyan);
+            border: 1px solid rgba(0,229,255,.25); margin-bottom: 1.5rem;
+        }
+        .hero h1 { font-size: clamp(2.4rem, 5vw, 4rem); font-weight: 800; line-height: 1.15; }
+        .hero h1 span { background: linear-gradient(135deg, var(--cyan), var(--violet)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { max-width: 620px; margin: 1.2rem auto 2.5rem; color: var(--text2); font-size: 1.12rem; }
+        .hero-buttons { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+        .btn {
+            padding: .7rem 1.6rem; border-radius: 8px; font-weight: 600; font-size: .92rem;
+            border: none; cursor: pointer; transition: all var(--transition);
+        }
+        .btn-primary { background: var(--cyan); color: #0f1021; }
+        .btn-primary:hover { background: #33ecff; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,229,255,.25); }
+        .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--text-muted); }
+        .btn-outline:hover { border-color: var(--cyan); color: var(--cyan); }
+
+        /* ============================================================
+           SECTIONS — shared
+           ============================================================ */
+        section { padding: 5rem 2rem; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .section-label {
+            font-size: .75rem; font-weight: 700; letter-spacing: .12em;
+            text-transform: uppercase; color: var(--cyan); margin-bottom: .5rem;
+        }
+        .section-title { font-size: 2rem; font-weight: 700; margin-bottom: 1rem; }
+        .section-desc { color: var(--text2); max-width: 680px; margin-bottom: 2.5rem; font-size: 1.05rem; }
+
+        /* glass cards */
+        .card {
+            background: var(--glass); border: 1px solid rgba(92,107,192,.18);
+            border-radius: var(--radius); padding: 2rem; backdrop-filter: blur(10px);
+            transition: transform var(--transition), box-shadow var(--transition);
+        }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,.35); }
+        .card h3 { font-size: 1.15rem; font-weight: 600; margin-bottom: .6rem; }
+        .card p { color: var(--text2); font-size: .95rem; }
+
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px,1fr)); gap: 1.5rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap: 1.5rem; }
+
+        /* ============================================================
+           EXPRESSION TREE SECTION — SVG diagram
+           ============================================================ */
+        .tree-diagram { display: flex; justify-content: center; margin: 2rem 0; }
+        .tree-diagram svg { max-width: 420px; width: 100%; height: auto; }
+        .tree-diagram .node-op { fill: #7c4dff; }
+        .tree-diagram .node-num { fill: #00e5ff; }
+        .tree-diagram .edge { stroke: #5c6bc0; stroke-width: 2.5; }
+        .tree-diagram text { fill: #fff; font-family: var(--sans); font-weight: 700; font-size: 16px; text-anchor: middle; dominant-baseline: central; }
+
+        /* ============================================================
+           CODE BLOCKS
+           ============================================================ */
+        .code-block {
+            background: var(--bg2); border: 1px solid rgba(92,107,192,.18);
+            border-radius: var(--radius); padding: 1.5rem 1.8rem;
+            overflow-x: auto; font-family: var(--mono); font-size: .88rem;
+            line-height: 1.8; color: var(--text2); margin: 1.5rem 0;
+        }
+        .code-block .kw { color: var(--violet); }
+        .code-block .fn { color: var(--cyan); }
+        .code-block .cm { color: var(--text-muted); font-style: italic; }
+        .code-block .str { color: var(--green); }
+        .code-block .num { color: var(--orange); }
+
+        /* ============================================================
+           STEPS / PROCESS
+           ============================================================ */
+        .step-list { counter-reset: steps; list-style: none; padding: 0; }
+        .step-list li {
+            counter-increment: steps; position: relative; padding: .8rem 0 .8rem 3.5rem;
+            border-left: 2px solid var(--bg3); margin-left: 1rem;
+        }
+        .step-list li::before {
+            content: counter(steps); position: absolute; left: -1rem;
+            width: 2rem; height: 2rem; border-radius: 50%;
+            background: var(--violet); color: #fff; font-weight: 700; font-size: .85rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .step-list li:last-child { border-left: none; }
+        .step-list strong { color: var(--cyan); }
+
+        /* ============================================================
+           TRAVERSAL CARDS
+           ============================================================ */
+        .trav-card { text-align: center; }
+        .trav-card .trav-icon { font-size: 2.5rem; margin-bottom: .8rem; }
+        .trav-card .trav-order { font-family: var(--mono); font-size: .85rem; color: var(--green); margin-top: .6rem; padding: .6rem; background: var(--bg2); border-radius: 8px; }
+
+        /* ============================================================
+           EVAL TABLE
+           ============================================================ */
+        table.eval-table {
+            width: 100%; border-collapse: collapse; margin: 1.5rem 0;
+            font-size: .95rem;
+        }
+        .eval-table th {
+            background: var(--bg3); padding: .75rem 1rem; text-align: left;
+            font-weight: 600; color: var(--cyan); border-bottom: 2px solid var(--text-muted);
+        }
+        .eval-table td {
+            padding: .65rem 1rem; border-bottom: 1px solid rgba(92,107,192,.15);
+        }
+        .eval-table tr:hover td { background: rgba(0,229,255,.04); }
+        .eval-result {
+            font-size: 1.5rem; font-weight: 700; color: var(--green);
+            text-align: center; margin: 1.5rem 0;
+        }
+
+        /* ============================================================
+           ARCHITECTURE
+           ============================================================ */
+        .arch-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 1rem; margin-top: 1.5rem; }
+        .arch-box {
+            background: var(--bg2); border-radius: var(--radius); padding: 1.2rem;
+            border-left: 3px solid var(--cyan); text-align: center;
+        }
+        .arch-box h4 { font-size: .95rem; margin-bottom: .4rem; color: var(--text); }
+        .arch-box p { font-size: .82rem; color: var(--text2); }
+        .arch-box.violet { border-left-color: var(--violet); }
+        .arch-box.green { border-left-color: var(--green); }
+        .arch-box.orange { border-left-color: var(--orange); }
+
+        /* ============================================================
+           FOOTER
+           ============================================================ */
+        footer {
+            border-top: 1px solid rgba(92,107,192,.15); padding: 3rem 2rem;
+            text-align: center; color: var(--text-muted); font-size: .88rem;
+        }
+        footer a { color: var(--text2); }
+        footer .footer-links { margin-top: .8rem; display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; }
+
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .hero h1 { font-size: 2rem; }
+            section { padding: 3rem 1.2rem; }
+        }
+
+        /* ============================================================
+           ANIMATIONS
+           ============================================================ */
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-up { animation: fadeUp .7s ease forwards; }
+        .delay-1 { animation-delay: .15s; opacity: 0; }
+        .delay-2 { animation-delay: .3s; opacity: 0; }
+        .delay-3 { animation-delay: .45s; opacity: 0; }
+    </style>
+</head>
+<body>
+
+<!-- ============================================================
+     NAVIGATION
+     ============================================================ -->
+<nav>
+    <div class="nav-inner">
+        <div class="nav-brand">🌳 ExprTree Visualizer</div>
+        <ul class="nav-links">
+            <li><a href="#what">Concepts</a></li>
+            <li><a href="#conversion">Conversion</a></li>
+            <li><a href="#construction">Construction</a></li>
+            <li><a href="#traversals">Traversals</a></li>
+            <li><a href="#evaluation">Evaluation</a></li>
+            <li><a href="#architecture">Architecture</a></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- ============================================================
+     HERO
+     ============================================================ -->
+<section class="hero" id="hero">
+    <span class="hero-badge fade-up">DATA STRUCTURES • VISUALIZATION • EDUCATION</span>
+    <h1 class="fade-up delay-1">
+        <span>Expression Tree</span><br />Visualizer
+    </h1>
+    <p class="fade-up delay-2">
+        An interactive desktop application that brings stacks, binary trees, and expression evaluation to life — step by step, node by node.
+    </p>
+    <div class="hero-buttons fade-up delay-3">
+        <a class="btn btn-primary" href="#what">Explore Documentation</a>
+        <a class="btn btn-outline" href="https://github.com/tasmaikeni13/expression-tree-visualizer" target="_blank">View on GitHub</a>
+    </div>
+</section>
+
+<!-- ============================================================
+     WHAT IS AN EXPRESSION TREE?
+     ============================================================ -->
+<section id="what">
+    <div class="container">
+        <p class="section-label">Fundamentals</p>
+        <h2 class="section-title">What is an Expression Tree?</h2>
+        <p class="section-desc">
+            An <strong>expression tree</strong> is a binary tree that represents a mathematical expression.
+            Leaf nodes hold <em>operands</em> (numeric values or symbolic variables), and internal nodes hold <em>operators</em> (+, −, ×, /, ^).
+            The tree's structure encodes evaluation order without needing parentheses.
+        </p>
+
+        <div class="grid-2">
+            <div class="card">
+                <h3>🔢 Operand Nodes (Leaves)</h3>
+                <p>
+                    Every leaf of the tree is an operand value. It may be a number such as <strong>3</strong> or a symbolic variable such as <strong>A</strong> or <strong>x</strong>.
+                    In the expressions <code>((3+4)/(9-2))</code> and <code>(A+B)</code>, the leaves are the tokens that participate in each operation.
+                </p>
+            </div>
+            <div class="card">
+                <h3>⚙️ Operator Nodes (Internal)</h3>
+                <p>
+                    Every internal node is an operator. It combines the results of its left and right sub-trees.
+                    The root operator <strong>/</strong> divides the result of <code>3+4</code> by <code>9-2</code>.
+                </p>
+            </div>
+        </div>
+
+        <!-- SVG Tree Diagram -->
+        <div class="tree-diagram" style="margin-top: 2.5rem;">
+            <svg viewBox="0 0 440 320" xmlns="http://www.w3.org/2000/svg">
+                <!-- Edges -->
+                <line class="edge" x1="220" y1="50" x2="120" y2="150" />
+                <line class="edge" x1="220" y1="50" x2="320" y2="150" />
+                <line class="edge" x1="120" y1="150" x2="65"  y2="250" />
+                <line class="edge" x1="120" y1="150" x2="175" y2="250" />
+                <line class="edge" x1="320" y1="150" x2="265" y2="250" />
+                <line class="edge" x1="320" y1="150" x2="375" y2="250" />
+                <!-- Root: / -->
+                <circle class="node-op" cx="220" cy="50"  r="26" />
+                <text x="220" y="50">/</text>
+                <!-- + -->
+                <circle class="node-op" cx="120" cy="150" r="26" />
+                <text x="120" y="150">+</text>
+                <!-- - -->
+                <circle class="node-op" cx="320" cy="150" r="26" />
+                <text x="320" y="150">−</text>
+                <!-- 3 -->
+                <circle class="node-num" cx="65"  cy="250" r="26" />
+                <text x="65"  y="250">3</text>
+                <!-- 4 -->
+                <circle class="node-num" cx="175" cy="250" r="26" />
+                <text x="175" y="250">4</text>
+                <!-- 9 -->
+                <circle class="node-num" cx="265" cy="250" r="26" />
+                <text x="265" y="250">9</text>
+                <!-- 2 -->
+                <circle class="node-num" cx="375" cy="250" r="26" />
+                <text x="375" y="250">2</text>
+            </svg>
+        </div>
+        <p style="text-align:center; color: var(--text-muted); font-size:.88rem; margin-top:.5rem;">
+            Expression tree for <code>((3+4)/(9-2))</code> — <span style="color:var(--violet);">violet</span> = operators, <span style="color:var(--cyan);">cyan</span> = operands
+        </p>
+
+        <div class="card" style="margin-top: 2rem;">
+            <h3>🧪 Representative Expressions</h3>
+            <p>
+                The visualizer accepts fully parenthesised or precedence-driven infix expressions such as
+                <code>(A+B)</code>, <code>x*(y+z)</code>, and <code>((a+4)/(b-2))</code> in addition to purely numeric forms.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     HOW INFIX CONVERSION WORKS
+     ============================================================ -->
+<section id="conversion" style="background: var(--bg2);">
+    <div class="container">
+        <p class="section-label">Algorithm</p>
+        <h2 class="section-title">How Infix → Postfix Conversion Works</h2>
+        <p class="section-desc">
+            The <strong>Shunting-Yard algorithm</strong>, invented by Edsger Dijkstra, converts human-readable infix notation
+            into machine-friendly postfix (Reverse Polish Notation) using a single stack.
+        </p>
+
+        <div class="grid-2">
+            <div>
+                <h3 style="margin-bottom: 1rem; color: var(--violet);">Algorithm Steps</h3>
+                <ol class="step-list">
+                    <li>Read an <strong>operand</strong> → send it directly to the output queue.</li>
+                    <li>Read an <strong>operator</strong> → pop higher-precedence operators from the stack to the output, then push this operator.</li>
+                    <li>Read <strong>'('</strong> → push it onto the stack as a barrier.</li>
+                    <li>Read <strong>')'</strong> → pop operators to output until matching '(' is found; discard both parentheses.</li>
+                    <li>After all tokens: pop remaining operators from the stack to the output.</li>
+                </ol>
+            </div>
+            <div>
+                <h3 style="margin-bottom: 1rem; color: var(--cyan);">Example Trace</h3>
+                <div class="code-block">
+<span class="cm">Input: ((3+4)/(9-2))</span>
+
+<span class="kw">Token</span>  <span class="kw">Stack</span>      <span class="kw">Output</span>
+──────────────────────────────
+  (     (
+  (     ((
+  3     ((          3
+  +     ((+         3
+  4     ((+         3 4
+  )     (           3 4 +
+  /     (/          3 4 +
+  (     (/(         3 4 +
+  9     (/(         3 4 + 9
+  -     (/(-        3 4 + 9
+  2     (/(-        3 4 + 9 2
+  )     (/          3 4 + 9 2 -
+  )     <span class="str">empty</span>       3 4 + 9 2 - /
+
+<span class="fn">Result:</span> <span class="str">3 4 + 9 2 - /</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     TREE CONSTRUCTION
+     ============================================================ -->
+<section id="construction">
+    <div class="container">
+        <p class="section-label">Building</p>
+        <h2 class="section-title">Expression Tree Construction</h2>
+        <p class="section-desc">
+            Once we have the postfix sequence, building the tree is elegantly simple:
+            scan left-to-right, pushing operand nodes and combining operator nodes.
+        </p>
+
+        <div class="grid-2">
+            <div class="card">
+                <h3>📥 Operand Token</h3>
+                <p>Create a leaf node with the operand value as its label. The operand may be numeric or symbolic. Push the node onto the stack with no children.</p>
+            </div>
+            <div class="card">
+                <h3>⚡ Operator Token</h3>
+                <p>Create an operator node. Pop two nodes from the stack — the first becomes the right child, the second becomes the left child. Push the new sub-tree back onto the stack.</p>
+            </div>
+        </div>
+
+        <div class="code-block">
+<span class="cm">Symbolic example: (A+B)</span>
+
+<span class="kw">Postfix</span>: A B +
+<span class="kw">Prefix</span>:  + A B
+<span class="kw">Tree</span>:    +(A,B)
+        </div>
+
+        <h3 style="margin-top: 2.5rem; margin-bottom: 1rem; color: var(--violet);">Step-by-Step for <code>3 4 + 9 2 - /</code></h3>
+        <div class="code-block">
+<span class="kw">Step 1:</span> Read <span class="num">3</span>  → push Node(3)           Stack: [<span class="num">3</span>]
+<span class="kw">Step 2:</span> Read <span class="num">4</span>  → push Node(4)           Stack: [<span class="num">3</span>, <span class="num">4</span>]
+<span class="kw">Step 3:</span> Read <span class="fn">+</span>  → pop 4,3 → Node(+)      Stack: [<span class="fn">+</span>(3,4)]
+<span class="kw">Step 4:</span> Read <span class="num">9</span>  → push Node(9)           Stack: [<span class="fn">+</span>(3,4), <span class="num">9</span>]
+<span class="kw">Step 5:</span> Read <span class="num">2</span>  → push Node(2)           Stack: [<span class="fn">+</span>(3,4), <span class="num">9</span>, <span class="num">2</span>]
+<span class="kw">Step 6:</span> Read <span class="fn">-</span>  → pop 2,9 → Node(-)      Stack: [<span class="fn">+</span>(3,4), <span class="fn">-</span>(9,2)]
+<span class="kw">Step 7:</span> Read <span class="fn">/</span>  → pop -,+ → Node(/)      Stack: [<span class="fn">/</span>(+(3,4),-(9,2))]
+
+<span class="str">Root = /</span>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     TRAVERSALS
+     ============================================================ -->
+<section id="traversals" style="background: var(--bg2);">
+    <div class="container">
+        <p class="section-label">Exploration</p>
+        <h2 class="section-title">Tree Traversals</h2>
+        <p class="section-desc">
+            Three depth-first traversals produce three different views of the same expression — each corresponding to a classical notation.
+        </p>
+
+        <div class="grid-3">
+            <div class="card trav-card">
+                <div class="trav-icon">🔀</div>
+                <h3>Inorder</h3>
+                <p>Left → <strong>Root</strong> → Right</p>
+                <p style="font-size:.88rem; margin-top:.5rem; color: var(--text2);">Produces the original infix expression (with implicit parenthesisation).</p>
+                <div class="trav-order">3 + 4 / 9 - 2</div>
+            </div>
+            <div class="card trav-card">
+                <div class="trav-icon">⬇️</div>
+                <h3>Preorder</h3>
+                <p><strong>Root</strong> → Left → Right</p>
+                <p style="font-size:.88rem; margin-top:.5rem; color: var(--text2);">Produces prefix (Polish) notation — operators precede their operands.</p>
+                <div class="trav-order">/ + 3 4 - 9 2</div>
+            </div>
+            <div class="card trav-card">
+                <div class="trav-icon">⬆️</div>
+                <h3>Postorder</h3>
+                <p>Left → Right → <strong>Root</strong></p>
+                <p style="font-size:.88rem; margin-top:.5rem; color: var(--text2);">Produces postfix (Reverse-Polish) notation — used for evaluation.</p>
+                <div class="trav-order">3 4 + 9 2 - /</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     EVALUATION
+     ============================================================ -->
+<section id="evaluation">
+    <div class="container">
+        <p class="section-label">Computation</p>
+        <h2 class="section-title">Expression Evaluation</h2>
+        <p class="section-desc">
+            The expression tree is evaluated bottom-up using <strong>postorder traversal</strong>:
+            first compute the left sub-tree, then the right sub-tree, then apply the operator at the root.
+        </p>
+
+        <table class="eval-table">
+            <thead>
+                <tr><th>Step</th><th>Node</th><th>Left Value</th><th>Right Value</th><th>Operation</th><th>Result</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>1</td><td style="color:var(--violet);">+</td><td>3</td><td>4</td><td>3 + 4</td><td style="color:var(--green); font-weight:600;">7</td></tr>
+                <tr><td>2</td><td style="color:var(--violet);">−</td><td>9</td><td>2</td><td>9 − 2</td><td style="color:var(--green); font-weight:600;">7</td></tr>
+                <tr><td>3</td><td style="color:var(--violet);">/</td><td>7</td><td>7</td><td>7 / 7</td><td style="color:var(--green); font-weight:600;">1</td></tr>
+            </tbody>
+        </table>
+        <div class="eval-result">RESULT = 1</div>
+    </div>
+</section>
+
+<!-- ============================================================
+     ARCHITECTURE
+     ============================================================ -->
+<section id="architecture" style="background: var(--bg2);">
+    <div class="container">
+        <p class="section-label">Engineering</p>
+        <h2 class="section-title">Project Architecture</h2>
+        <p class="section-desc">
+            The application follows a modular Model–View–Controller design, with pure-Python algorithms cleanly separated from the PySide6 GUI.
+        </p>
+
+        <div class="arch-grid">
+            <div class="arch-box">
+                <h4>🧠 Core</h4>
+                <p>Tokenizer, parser, tree node, traversals, evaluator</p>
+            </div>
+            <div class="arch-box violet">
+                <h4>⚙️ Algorithms</h4>
+                <p>Stack ADT, Shunting-Yard with step recording</p>
+            </div>
+            <div class="arch-box green">
+                <h4>🎨 UI</h4>
+                <p>Input panel, tree canvas, stack visualizer, traversal panel</p>
+            </div>
+            <div class="arch-box orange">
+                <h4>🎬 Visualization</h4>
+                <p>Tree renderer, animation controller</p>
+            </div>
+        </div>
+
+        <div class="code-block" style="margin-top: 2rem;">
+expression_tree_visualizer/
+├── run.py                 <span class="cm"># Auto-install deps + launch</span>
+├── requirements.txt       <span class="cm"># PySide6</span>
+├── app/
+│   ├── main.py            <span class="cm"># QApplication + stylesheet</span>
+│   └── config.py          <span class="cm"># Colours, fonts, timing</span>
+├── core/                  <span class="cm"># Pure-Python algorithms</span>
+│   ├── tokenizer.py
+│   ├── parser.py
+│   ├── expression_tree.py
+│   ├── traversal.py
+│   └── evaluator.py
+├── algorithms/
+│   ├── stack.py           <span class="cm"># Explicit Stack ADT</span>
+│   └── shunting_yard.py   <span class="cm"># Shunting-Yard + steps</span>
+├── ui/                    <span class="cm"># PySide6 widgets</span>
+│   ├── main_window.py
+│   ├── expression_input.py
+│   ├── tree_canvas.py
+│   ├── stack_visualizer.py
+│   └── traversal_panel.py
+├── visualization/
+│   ├── tree_renderer.py   <span class="cm"># Layout + scene drawing</span>
+│   └── animation_controller.py
+└── utils/
+    ├── validators.py
+    ├── expression_generator.py
+    └── logger.py
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     INTERACTIVE DEMO
+     ============================================================ -->
+<section id="demo">
+    <div class="container">
+        <p class="section-label">Application</p>
+        <h2 class="section-title">How the GUI Works</h2>
+        <p class="section-desc">
+            Launch the application and interact with mathematical expressions through a polished, dark-themed desktop interface.
+        </p>
+
+        <div class="grid-2">
+            <div class="card">
+                <h3>1. Enter an Expression</h3>
+                <p>Type an infix expression like <code>((3+4)/(9-2))</code>, <code>(A+B)</code>, or <code>x*(y+z)</code> into the input field. Real-time validation highlights errors as you type.</p>
+            </div>
+            <div class="card">
+                <h3>2. Build or Animate</h3>
+                <p>Click <strong>⚡ Build</strong> for instant results, or <strong>▶ Animate</strong> to watch the Shunting-Yard algorithm and tree construction unfold step by step.</p>
+            </div>
+            <div class="card">
+                <h3>3. Explore Traversals</h3>
+                <p>Click Inorder, Preorder, or Postorder — nodes highlight in real time following the traversal path, with educational descriptions.</p>
+            </div>
+            <div class="card">
+                <h3>4. View Evaluation</h3>
+                <p>Numeric expressions show each sub-expression computed bottom-up with a calculation log and final result. Symbolic expressions remain available for conversion, traversal, and tree exploration.</p>
+            </div>
+            <div class="card">
+                <h3>5. Interact with the Tree</h3>
+                <p>Zoom in/out with the scroll wheel, drag to pan, hover on nodes for tooltips showing whether each node is an operator or operand.</p>
+            </div>
+            <div class="card">
+                <h3>6. Export Your Work</h3>
+                <p>Save the tree as a PNG image or export the explanation log as a text file for study notes or inclusion in reports.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer>
+    <p>
+        <strong>Expression Tree Visualizer</strong> — An educational data structures visualisation tool
+    </p>
+    <div class="footer-links">
+        <a href="https://github.com/your-username/expression-tree-visualizer">GitHub</a>
+        <a href="#hero">Back to Top</a>
+        <span>License: Apache 2.0</span>
+        <span>&copy; 2026 Tasmai Keni</span>
+    </div>
+</footer>
+
+</body>
+</html>
